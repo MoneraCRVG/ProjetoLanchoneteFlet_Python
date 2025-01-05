@@ -1,3 +1,5 @@
+import datetime
+
 import flet as ft
 from database.lanchonete_sabrina_db import *
 
@@ -131,14 +133,14 @@ def main(page: ft.Page):
             produtos = listar_produtos()
 
             rows = []
-            for codigo, nome, preco, quantidadeEstoque in produtos:
+            for codigo, nome, preco, quantidade in produtos:
                 rows.append(
                     ft.DataRow(
                         [
                             ft.DataCell(ft.Text(f"{codigo}")),
                             ft.DataCell(ft.Text(nome)),
                             ft.DataCell(ft.Text(f"R$ {preco:.2f}")),
-                            ft.DataCell(ft.Text(quantidadeEstoque)),
+                            ft.DataCell(ft.Text(quantidade)),
                         ]
                     )
                 )
@@ -166,32 +168,32 @@ def main(page: ft.Page):
         elif page.route == "/cadastrar-produto":
             nome = ft.TextField(label="Descrição")
             preco = ft.TextField(label="Preço")
-            quantidadeEstoque = ft.TextField(label="Quantidade em estoque")
+            quantidade = ft.TextField(label="Quantidade em estoque")
 
             def enviar(e):
                 nome.error_text = ""
                 preco.error_text = ""
-                quantidadeEstoque.error_text = ""
+                quantidade.error_text = ""
 
                 _descricao = nome.value
                 _preco = preco.value
-                _quantidadeEstoque = quantidadeEstoque.value
+                _quantidadeEstoque = quantidade.value
 
                 if _preco == "":
                     preco.error_text = "Campo obrigatório"
                 if _descricao == "":
                     nome.error_text = "Campo obrigatório"
                 if _quantidadeEstoque == "":
-                    quantidadeEstoque.error_text = "Campo obrigatório"
+                    quantidade.error_text = "Campo obrigatório"
 
                 if not _preco or not is_decimal(_preco):
                     preco.error_text = "Insira um preço válido"
 
                 if not _quantidadeEstoque or not is_decimal(_quantidadeEstoque):
-                    quantidadeEstoque.error_text = "Insira uma quantidade válida"
+                    quantidade.error_text = "Insira uma quantidade válida"
 
-                if not nome.error_text and not preco.error_text and not quantidadeEstoque.error_text:
-                    enviar_produtos(nome.value, preco.value, quantidadeEstoque.value)
+                if not nome.error_text and not preco.error_text and not quantidade.error_text:
+                    enviar_produtos(nome.value, preco.value, quantidade.value)
 
             page.views.append(
                 ft.View(
@@ -200,7 +202,7 @@ def main(page: ft.Page):
                         appbar,
                         nome,
                         preco,
-                        quantidadeEstoque,
+                        quantidade,
                         ft.ElevatedButton(text="Enviar", on_click=enviar)
                     ],
                     appbar=appbar,
@@ -210,19 +212,19 @@ def main(page: ft.Page):
         elif page.route == "/editar-produto":
             nome = ft.TextField(label="Descrição", disabled=True)
             preco = ft.TextField(label="Preço", disabled=True)
-            quantidadeEstoque = ft.TextField(label="Quantidade em estoque", disabled=True)
+            quantidade = ft.TextField(label="Quantidade em estoque", disabled=True)
 
             def buscar(e):
                 codigo.error_text = ""
                 resultado = buscar_produto(codigo.value)
                 if resultado:
-                    _, nome.value, preco.value, quantidadeEstoque.value = resultado
+                    _, nome.value, preco.value, quantidade.value = resultado
                     nome.disabled = False
-                    quantidadeEstoque.disabled = False
+                    quantidade.disabled = False
                     preco.disabled = False
                     enviar_botao.disabled = False
                     nome.value = ""
-                    quantidadeEstoque.value = ""
+                    quantidade.value = ""
                     preco.value = ""
                     enviar_botao.value = ""
                     page.update()
@@ -235,7 +237,7 @@ def main(page: ft.Page):
             buscar_botao = ft.ElevatedButton(text="Buscar produto", on_click=buscar)
 
             def enviar(e):
-                editar_produto(codigo.value, nome.value, preco.value, quantidadeEstoque.value)
+                editar_produto(codigo.value, nome.value, preco.value, quantidade.value)
             enviar_botao = ft.ElevatedButton(text="Salvar alterações", on_click=enviar, disabled=True)
 
             page.views.append(
@@ -249,7 +251,7 @@ def main(page: ft.Page):
                         ]),
                         nome,
                         preco,
-                        quantidadeEstoque,
+                        quantidade,
                         enviar_botao
                     ],
                 )
@@ -257,13 +259,13 @@ def main(page: ft.Page):
         elif page.route == "/excluir-produto":
             nome = ft.TextField(label="Descrição", disabled=True)
             preco = ft.TextField(label="Preço", disabled=True)
-            quantidadeEstoque = ft.TextField(label="Quantidade em estoque", disabled=True)
+            quantidade = ft.TextField(label="Quantidade em estoque", disabled=True)
 
             def buscar(e):
                 codigo.error_text = ""
                 resultado = buscar_produto(codigo.value)
                 if resultado:
-                    _, nome.value, preco.value, quantidadeEstoque.value = resultado
+                    _, nome.value, preco.value, quantidade.value = resultado
                     page.update()
                 else:
                     codigo.error_text = "Produto não encontrado!"
@@ -288,13 +290,14 @@ def main(page: ft.Page):
                         ]),
                         nome,
                         preco,
-                        quantidadeEstoque,
+                        quantidade,
                         deletar_botao
 
                     ],
                 )
             )
         #endregion
+        # region Clientes
         elif page.route == "/clientes":
             page.views.append(
                 ft.View(
@@ -305,7 +308,7 @@ def main(page: ft.Page):
                         ft.ElevatedButton(
                             icon=ft.Icons.ADD,
                             text="Cadastrar clientes",
-                            on_click=lambda e: page.go("/cadastrar-cliente")
+                            on_click=lambda e: page.go("/cadastrar-cpf_cliente")
                         ),
                         ft.ElevatedButton(
                             icon=ft.Icons.SEARCH,
@@ -315,12 +318,12 @@ def main(page: ft.Page):
                         ft.ElevatedButton(
                             icon=ft.Icons.EDIT,
                             text="Alterar clientes",
-                            on_click=lambda e: page.go("/editar-cliente")
+                            on_click=lambda e: page.go("/editar-cpf_cliente")
                         ),
                         ft.ElevatedButton(
                             icon=ft.Icons.DELETE,
                             text="Excluir clientes",
-                            on_click=lambda e: page.go("/excluir-cliente")
+                            on_click=lambda e: page.go("/excluir-cpf_cliente")
                         )
                     ],
                     drawer=drawer,
@@ -331,14 +334,15 @@ def main(page: ft.Page):
             clientes = listar_clientes()
 
             rows = []
-            for codigo, nome, preco, quantidadeEstoque in clientes:
+            for codigo, cpf, nome, telefone, endereco in clientes:
                 rows.append(
                     ft.DataRow(
                         [
-                            ft.DataCell(ft.Text(f"{codigo}")),
+                            ft.DataCell(ft.Text(codigo)),
+                            ft.DataCell(ft.Text(cpf)),
                             ft.DataCell(ft.Text(nome)),
-                            ft.DataCell(ft.Text(f"R$ {preco:.2f}")),
-                            ft.DataCell(ft.Text(quantidadeEstoque)),
+                            ft.DataCell(ft.Text(telefone)),
+                            ft.DataCell(ft.Text(endereco)),
                         ]
                     )
                 )
@@ -346,9 +350,10 @@ def main(page: ft.Page):
             table = ft.DataTable(
                 columns=[
                     ft.DataColumn(ft.Text("Código")),
-                    ft.DataColumn(ft.Text("Descrição")),
-                    ft.DataColumn(ft.Text("Preço")),
-                    ft.DataColumn(ft.Text("Quantidade em Estoque")),
+                    ft.DataColumn(ft.Text("CPF")),
+                    ft.DataColumn(ft.Text("Nome")),
+                    ft.DataColumn(ft.Text("Telefone")),
+                    ft.DataColumn(ft.Text("Endereço")),
                 ],
                 rows=rows
             )
@@ -357,18 +362,17 @@ def main(page: ft.Page):
                     "/lista-clientes",
                     [
                         ft.AppBar(
-                            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK,
-                                                  on_click=lambda _: page.go("/clientes"))),
+                            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda _: page.go("/clientes"))),
                         table,
                     ],
                     drawer=drawer,
                 )
             )
-        elif page.route == "/cadastrar-cliente":
+        elif page.route == "/cadastrar-cpf_cliente":
             nome = ft.TextField(label="Nome")
             cpf = ft.TextField(label="CPF")
-            telefone = ft.TextField(label="Telefone")
             endereco = ft.TextField(label="Endereço")
+            telefone = ft.TextField(label="Telefone")
 
             def enviar(e):
                 nome.error_text = ""
@@ -377,7 +381,7 @@ def main(page: ft.Page):
                 endereco.error_text = ""
 
                 _nome = nome.value
-                _cpf = preco.value
+                _cpf = cpf.value
                 _telefone = telefone.value
                 _endereco = endereco.value
 
@@ -391,11 +395,11 @@ def main(page: ft.Page):
                     endereco.error_text = "Campo obrigatório"
 
                 if not nome.error_text and not cpf.error_text and not telefone.error_text and not endereco.error_text:
-                    enviar_clientes(nome.value, preco.value, quantidadeEstoque.value)
+                    enviar_clientes(cpf.value, nome.value, telefone.value, endereco.value)
 
             page.views.append(
                 ft.View(
-                    "/cadastrar-cliente",
+                    "/cadastrar-cpf_cliente",
                     [
                         appbar,
                         nome,
@@ -408,15 +412,16 @@ def main(page: ft.Page):
                     drawer=drawer
                 )
             )
-        elif page.route == "/editar-cliente":
+        elif page.route == "/editar-cpf_cliente":
+            codigo = ft.TextField(label="Código")
             nome = ft.TextField(label="Nome", disabled=True)
             telefone = ft.TextField(label="Telefone", disabled=True)
             endereco = ft.TextField(label="Endereço", disabled=True)
+            cpf = ft.TextField(label="CPF", disabled=True)
 
             def buscar(e):
-                resultado = buscar_cliente(cpf.value)
+                resultado = buscar_cliente(codigo.value)
                 if resultado:
-                    _, nome.value, telefone.value, endereco.value = resultado
                     nome.error_text = ""
                     cpf.error_text = ""
                     telefone.error_text = ""
@@ -425,30 +430,36 @@ def main(page: ft.Page):
                     cpf.value = ""
                     telefone.value = ""
                     endereco.value = ""
+                    _,cpf.value, nome.value, telefone.value, endereco.value = resultado
+
+                    nome.disabled = False
+                    cpf.disabled = False
+                    telefone.disabled = False
+                    endereco.disabled = False
+                    enviar_botao.disabled = False
                     page.update()
                 else:
-                    cpf.error_text = "cliente não encontrado!"
+                    codigo.error_text = "Cliente não encontrado!"
                     page.update()
 
-            cpf = ft.TextField(label="CPF")
 
-            buscar_botao = ft.ElevatedButton(text="Buscar cliente (CPF)", on_click=buscar)
+            buscar_botao = ft.ElevatedButton(text="Buscar cpf_cliente", on_click=buscar)
 
             def enviar(e):
-                editar_cliente(codigo.value, nome.value, preco.value, quantidadeEstoque.value)
+                editar_cliente(codigo.value, cpf.value, nome.value, telefone.value, endereco.value)
 
             enviar_botao = ft.ElevatedButton(text="Salvar alterações", on_click=enviar, disabled=True)
-
             page.views.append(
                 ft.View(
-                    "/editar-cliente",
+                    "/editar-cpf_cliente",
                     [
                         ft.AppBar(leading=ft.IconButton(icon=ft.Icons.ARROW_BACK,
                                                         on_click=lambda _: page.go("/clientes"))),
                         ft.Row([
-                            cpf,
+                            codigo,
                             buscar_botao,
                         ]),
+                        cpf,
                         nome,
                         telefone,
                         endereco,
@@ -456,32 +467,37 @@ def main(page: ft.Page):
                     ],
                 )
             )
-        elif page.route == "/excluir-cliente":
+        elif page.route == "/excluir-cpf_cliente":
+            cpf = ft.TextField(label="CPF", disabled=True)
             nome = ft.TextField(label="Descrição", disabled=True)
             preco = ft.TextField(label="Preço", disabled=True)
-            quantidadeEstoque = ft.TextField(label="Quantidade em estoque", disabled=True)
+            quantidade = ft.TextField(label="Quantidade em estoque", disabled=True)
+
 
             def buscar(e):
                 codigo.error_text = ""
                 resultado = buscar_cliente(codigo.value)
                 if resultado:
-                    _, nome.value, preco.value, quantidadeEstoque.value = resultado
+                    _, cpf.value, nome.value, preco.value, quantidade.value = resultado
+                    deletar_botao.disabled = False
                     page.update()
                 else:
-                    codigo.error_text = "cliente não encontrado!"
+                    codigo.error_text = "cpf_cliente não encontrado!"
                     page.update()
 
             codigo = ft.TextField(label="Código")
 
-            buscar_botao = ft.ElevatedButton(text="Buscar cliente", on_click=buscar)
+            buscar_botao = ft.ElevatedButton(text="Buscar cpf_cliente", on_click=buscar)
 
             def enviar_solicitacao_deletar_cliente(e):
                 deletar_cliente(codigo.value)
+                deletar_botao.disabled = True
 
-            deletar_botao = ft.ElevatedButton(text="Excluir cliente", on_click=enviar_solicitacao_deletar_cliente)
+
+            deletar_botao = ft.ElevatedButton(text="Excluir cpf_cliente", on_click=enviar_solicitacao_deletar_cliente, disabled=True)
             page.views.append(
                 ft.View(
-                    "/excluir-cliente",
+                    "/excluir-cpf_cliente",
                     [
                         ft.AppBar(
                             leading=ft.IconButton(icon=ft.Icons.ARROW_BACK,
@@ -490,14 +506,86 @@ def main(page: ft.Page):
                             codigo,
                             buscar_botao,
                         ]),
+                        cpf,
                         nome,
                         preco,
-                        quantidadeEstoque,
+                        quantidade,
                         deletar_botao
-
                     ],
                 )
             )
+        #endregion
+        #region Novo Pedido
+        elif page.route == "/novo-pedido":
+            data = datetime.date.today()
+            hora = datetime.datetime.now().time()
+
+            pagamento = ft.Dropdown(
+                options=[
+                    ft.dropdown.Option("Pix"),
+                    ft.dropdown.Option("Cartão de crédito"),
+                    ft.dropdown.Option("Cartão de débito"),
+                    ft.dropdown.Option("Dinheiro")
+                ],
+                label="Método de pagamento",
+                width=300
+            )
+
+            cpf_cliente = ft.TextField(label="CPF do cliente")
+            produto = ft.TextField(label="Código do produto")
+            produtos_selecionados = []
+
+            def adicionar_produto(e):
+                if produto.value:
+                    produtos_selecionados.append((produto.value, desconto.value, observacao.value, quantidade.value))
+                    produto.value = ""
+                    desconto.value = ""
+                    observacao.value = ""
+                    quantidade.value = ""
+                    page.update()
+
+            def enviar_pedido_button(e):
+                lista_produtos = []
+                for produto.value in produtos_selecionados:
+                    lista_produtos.append(produto.value)
+
+                cliente_selecionado = cpf_cliente.value
+                if cliente_selecionado and produtos_selecionados and pagamento.value:
+                    enviar_pedido(cliente_selecionado, lista_produtos, pagamento.value, data, hora)
+                else:
+                    page.add(ft.Text("Preencha todos os campos antes de enviar o pedido.", color="red"))
+                    page.update()
+
+            adicionar_produto_button = ft.ElevatedButton("Adicionar Produto", on_click=adicionar_produto)
+
+            enviar_button = ft.ElevatedButton(text="Enviar Pedido", on_click=enviar_pedido_button)
+            desconto = ft.TextField(label="Desconto (%)")
+            observacao = ft.TextField(label="Observação")
+            quantidade = ft.TextField(label="Quantidade")
+            page.views.append(
+                ft.View(
+                    "/novo-produto",
+                    controls=[
+                        ft.AppBar(
+                            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK,
+                                                  on_click=lambda _: page.go("/home"))),
+                        cpf_cliente,
+                        ft.Row([
+                            produto,
+                            desconto,
+                            observacao,
+                            quantidade,
+                        ]),
+                        adicionar_produto_button,
+                        ft.Text("Produtos selecionados:"),
+                        ft.Column([ft.Text(produto) for produto in produtos_selecionados]),
+                        pagamento,
+                        enviar_button
+                    ],
+                    spacing=20
+                )
+            )
+        #endregion
         page.update()
 
     page.on_route_change = route_change
